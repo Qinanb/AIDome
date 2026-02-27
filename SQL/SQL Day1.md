@@ -15,7 +15,7 @@ SELECT * FROM emp WHERE deptno = 30;
 3.列出佣金高于薪金30%的员工姓名、职位和收入（薪金+佣金）;
 
 ```sqlite
-SELECT ename, job, (sal + IFNULL(comm, 0)) AS incomeFROM emp WHERE comm > sal * 0.3;
+SELECT ename, job, (sal + IFNULL(comm, 0)) AS income FROM emp WHERE comm > sal * 0.3;
 ```
 
 4.找出部门30中所有经理和部门20中所有柜员的详细资料。
