@@ -21,6 +21,10 @@
  ```sqlite
  SELECT ename,ROUND(STRFTIME('%Y',hiredate)+(STRFTIME('%m', hiredate)-1)/12.0,1 ),loc 
  FROM emp LEFT JOIN dept ON emp.deptno=dept.deptno WHERE emp.deptno=30;
+ 
+ -- 修改
+ SELECT ename,ROUND((JULIANDAY('now')-JULIANDAY(hiredate))/365,1 ),loc 
+ FROM emp LEFT JOIN dept ON emp.deptno=dept.deptno WHERE emp.deptno=30;
  ```
 
 
