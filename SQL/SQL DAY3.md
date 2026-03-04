@@ -64,5 +64,11 @@ SELECT d.deptno,dname,COUNT(sal),COUNT(empno)
 FROM dept d LEFT JOIN emp e ON d.deptno=e.deptno
 WHERE dname LIKE'%S%'
 GROUP BY d.deptno;
+
+--修改
+SELECT d.deptno,dname,SUM(sal),COUNT(empno)
+FROM dept d LEFT JOIN emp e ON d.deptno=e.deptno
+WHERE dname LIKE'%S%'
+GROUP BY d.deptno;
 ```
 
