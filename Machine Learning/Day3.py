@@ -6,7 +6,7 @@ torch.manual_seed(seed)
 
 # 张量创建与属性查询
 
-tensor_A = torch.randint(10, 90, [12]).reshape(3, 4)
+tensor_A = torch.randint(10, 100, [12]).reshape(3, 4)
 print(tensor_A)  # 设置随机数种子后数据不会发生变化
 print(f'tensor_A的形状:{tensor_A.shape}')
 print(f'tensor_A的数据类型:{tensor_A.dtype}')
