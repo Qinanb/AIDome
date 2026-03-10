@@ -4,7 +4,7 @@ import numpy as np
 from torch.utils.data import DataLoader,TensorDataset
 import matplotlib.pyplot as plt
 from tensorboardX import SummaryWriter
-# writer = SummaryWriter(log_dir='logs')
+writer = SummaryWriter(log_dir='logs')
 
 '''
 tensorboard --logdir="D:\pydome\AI25-12\Machine Learning\Day4\logs"
@@ -54,7 +54,7 @@ epoches = 500
 
 # dataloader可迭代对象，每次迭代会产生一个batch的数据，由输入张量和目标张量元组 组成
 dataloader=DataLoader(dataset,
-           batch_size=5,
+           batch_size=20,
            shuffle=True,
            )
 
@@ -94,7 +94,7 @@ for epoch in range(1, epoches + 1):
         print(f'epoch:{epoch},loss:{avg_loss}-----> y={w:.4f}x{b:.4f}')
 
         # 记录 loss 到 TensorBoard
-        # writer.add_scalar('Loss/train', avg_loss, epoch)
+        writer.add_scalar('Loss/train', avg_loss, epoch)
 
 
         # 计算拟合线的y坐标
@@ -102,12 +102,12 @@ for epoch in range(1, epoches + 1):
 
         line.set_xdata(x_fit)  # 更新拟合线X数据
         line.set_ydata(y_fit)  # 更新拟合线Y数据
-        line.set_label(f'Fitted Line: y={w:.4f}x{b:.4f}')  # 更新标签
+        line.set_label(f'Fitted Line: y={w:.4f}x+{b:.4f}')  # 更新标签
         ax.legend()  # 刷新图例
         fig.canvas.draw()  # 重绘画布
         plt.pause(0.1)
 
-# writer.close()
+writer.close()
 plt.show()
 
 
