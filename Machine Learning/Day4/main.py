@@ -4,7 +4,7 @@ import numpy as np
 from torch.utils.data import DataLoader,TensorDataset
 import matplotlib.pyplot as plt
 from tensorboardX import SummaryWriter
-writer = SummaryWriter(log_dir='logs')
+# writer = SummaryWriter(log_dir='logs')
 
 '''
 tensorboard --logdir="D:\pydome\AI25-12\Machine Learning\Day4\logs"
@@ -28,9 +28,6 @@ y_tarin = torch.tensor(y_data, dtype=torch.float32)
 dataset=TensorDataset(x_tarin,y_tarin)
 
 
-# 设置随机数种子
-seed = 32
-torch.manual_seed(seed)
 
 # 方案2: 手动编写,直接重写继承nn.Module
 
@@ -97,7 +94,7 @@ for epoch in range(1, epoches + 1):
         print(f'epoch:{epoch},loss:{avg_loss}-----> y={w:.4f}x{b:.4f}')
 
         # 记录 loss 到 TensorBoard
-        writer.add_scalar('Loss/train', avg_loss, epoch)
+        # writer.add_scalar('Loss/train', avg_loss, epoch)
 
 
         # 计算拟合线的y坐标
@@ -110,7 +107,7 @@ for epoch in range(1, epoches + 1):
         fig.canvas.draw()  # 重绘画布
         plt.pause(0.1)
 
-writer.close()
+# writer.close()
 plt.show()
 
 
