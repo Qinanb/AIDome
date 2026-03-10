@@ -5,6 +5,10 @@ from torch.utils.data import DataLoader,TensorDataset
 import matplotlib.pyplot as plt
 from tensorboardX import SummaryWriter
 writer = SummaryWriter(log_dir='logs')
+
+'''
+tensorboard --logdir="D:\pydome\AI25-12\Machine Learning\Day4\logs"
+'''
 # 1.散点输入
 path='./dataset/ev_range_dataset.xlsx'
 
