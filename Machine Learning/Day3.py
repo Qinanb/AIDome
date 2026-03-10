@@ -25,6 +25,7 @@ tensor_B 的第一个元素是 51 对应 tensor_A[1,1]
 tensor_A 是 3行4列，按行优先存储，第 0 行占 0-3 索引，第 1 行从索引 4 开始
 tensor_A[1,1] 是第 1 行的第 1 列
 索引 = 第 1 行起始索引（4） + 列索引（1） = 5
+
 '''
 tensor_C = tensor_A.transpose(0, 1)
 print(f'tensor_C是否连续:{tensor_C.is_contiguous()}')
