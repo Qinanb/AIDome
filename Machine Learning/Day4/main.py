@@ -3,8 +3,8 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader,TensorDataset
 import matplotlib.pyplot as plt
-from tensorboardX import SummaryWriter
-writer = SummaryWriter(log_dir='logs')
+# from tensorboardX import SummaryWriter
+# writer = SummaryWriter(log_dir='logs')
 
 '''
 tensorboard --logdir="D:\pydome\AI25-12\Machine Learning\Day4\logs"
@@ -21,6 +21,7 @@ y_data = data[:, 1]
 # 把x，y转换成tensor
 x_tarin = torch.tensor(x_data, dtype=torch.float32)
 y_tarin = torch.tensor(y_data, dtype=torch.float32)
+
 
 
 # 用于封装张量，将输入张量和输出张量组成一个数据集
@@ -50,11 +51,11 @@ model = LinearModel()
 criterion = torch.nn.MSELoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=0.000001)
 # 4.开始迭代
-epoches = 500
+epoches = 2000
 
 # dataloader可迭代对象，每次迭代会产生一个batch的数据，由输入张量和目标张量元组 组成
 dataloader=DataLoader(dataset,
-           batch_size=20,
+           batch_size=10,
            shuffle=True,
            )
 
@@ -94,7 +95,7 @@ for epoch in range(1, epoches + 1):
         print(f'epoch:{epoch},loss:{avg_loss}-----> y={w:.4f}x{b:.4f}')
 
         # 记录 loss 到 TensorBoard
-        writer.add_scalar('Loss/train', avg_loss, epoch)
+        # writer.add_scalar('Loss/train', avg_loss, epoch)
 
 
         # 计算拟合线的y坐标
@@ -107,7 +108,7 @@ for epoch in range(1, epoches + 1):
         fig.canvas.draw()  # 重绘画布
         plt.pause(0.1)
 
-writer.close()
+# writer.close()
 plt.show()
 
 
