@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block title %}系统设置 - 无人机检测平台{% endblock %}
+
+{% block content %}
+<div class="page-header fade-in">
+    <h1><i class="ri-settings-3-line"></i> 系统设置</h1>
+    <p>管理系统配置和存储</p>
+</div>
+
+<!-- 模型信息 -->
+<div class="card fade-in" style="margin-bottom:20px;">
+    <h3 style="font-size:15px; margin-bottom:16px;">
+        <i class="ri-brain-line" style="color:var(--purple)"></i> 模型信息
+    </h3>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px;">
+        <div style="padding:12px; background:var(--bg-secondary); border-radius:var(--radius-sm);">
+            <small style="color:var(--text-muted);">模型架构</small>
+            <p style="font-weight:600; margin-top:4px;">YOLOv8n (Nano)</p>
+        </div>
+        <div style="padding:12px; background:var(--bg-secondary); border-radius:var(--radius-sm);">
+            <small style="color:var(--text-muted);">检测类别</small>
+            <p style="font-weight:600; margin-top:4px;">drone (0), bird (1)</p>
+        </div>
+        <div style="padding:12px; background:var(--bg-secondary); border-radius:var(--radius-sm);">
+            <small style="color:var(--text-muted);">输入尺寸</small>
+            <p style="font-weight:600; margin-top:4px;">640 × 640</p>
+        </div>
+        <div style="padding:12px; background:var(--bg-secondary); border-radius:var(--radius-sm);">
+            <small style="color:var(--text-muted);">训练轮次</small>
+            <p style="font-weight:600; margin-top:4px;">100 epochs</p>
+        </div>
+        <div style="padding:12px; background:var(--bg-secondary); border-radius:var(--radius-sm);">
+            <small style="color:var(--text-muted);">模型文件</small>
+            <p style="font-weight:600; margin-top:4px; font-size:12px;">best.pt</p>
+        </div>
+        <div style="padding:12px; background:var(--bg-secondary); border-radius:var(--radius-sm);">
+            <small style="color:var(--text-muted);">类别数量</small>
+            <p style="font-weight:600; margin-top:4px;">2 类</p>
+        </div>
+    </div>
+</div>
+
+<!-- AI 配置 -->
+<div class="card fade-in" style="margin-bottom:20px;">
+    <h3 style="font-size:15px; margin-bottom:16px;">
+        <i class="ri-sparkling-line" style="color:var(--orange)"></i> AI 分析配置
+        <span id="aiStatus" class="badge" style="margin-left:8px; font-size:11px;"></span>
+    </h3>
+    <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">
+        配置 OpenAI 兼容接口，用于对检测结果进行智能分析。支持 DeepSeek / 通义千问 / Ollama 等。
+    </p>
+    <div style="display:flex; flex-direction:column; gap:12px; max-width:600px;">
+        <div>
+            <label style="font-size:12px; color:var(--text-secondary); display:block; margin-bottom:4px;">API 地址</label>
+            <input type="text" id="aiBase" placeholder="例如: https://api.deepseek.com 或 http://localhost:11434"
+                style="width:100%; padding:10px 14px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-primary); font-size:13px; outline:none;">
+        </div>
+        <div>
+            <label style="font-size:12px; color:var(--text-secondary); display:block; margin-bottom:4px;">API Key</label>
+            <input type="password" id="aiKey" placeholder="sk-..."
+                style="width:100%; padding:10px 14px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-primary); font-size:13px; outline:none;">
+        </div>
+        <div>
+            <label style="font-size:12px; color:var(--text-secondary); display:block; margin-bottom:4px;">模型名称</label>
+            <input type="text" id="aiModel" placeholder="例如: deepseek-chat / qwen-plus / llama3"
+                style="width:100%; padding:10px 14px; background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-primary); font-size:13px; outline:none;">
+        </div>
+        <div>
+            <button class="btn btn-primary" onclick="saveAiConfig()">
+                <i class="ri-save-line"></i> 保存配置
+            </button>
+            <button class="btn btn-secondary" onclick="testAiConfig()" style="margin-left:8px;">
+                <i class="ri-sparkling-line"></i> 测试连接
+            </button>
+        </div>
+    </div>
+    <div style="margin-top:12px; font-size:12px; color:var(--text-muted); line-height:1.8;">
+        <p><strong>常用接口示例:</strong></p>
+        <p>DeepSeek: https://api.deepseek.com  |  模型: deepseek-chat</p>
+        <p>通义千问: https://dashscope.aliyuncs.com/compatible-mode  |  模型: qwen-plus</p>
+        <p>Ollama 本地: http://localhost:11434  |  模型: qwen2.5:7b</p>
+    </div>
+</div>
+
+<!-- 存储管理 -->
+<div class="card fade-in" style="margin-bottom:20px;">
+    <h3 style="font-size:15px; margin-bottom:16px;">
+        <i class="ri-database-2-line" style="color:var(--accent)"></i> 存储管理
+    </h3>
+    <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px;">
+        清理上传文件和检测结果的临时文件，释放磁盘空间
+    </p>
+    <div style="display:flex; gap:12px;">
+        <button class="btn btn-danger" onclick="doCleanup()">
+            <i class="ri-delete-bin-5-line"></i> 清理临时文件
+        </button>
+        <button class="btn btn-secondary" onclick="apiClearHistory().then(() => showToast('历史已清空', 'info'))">
+            <i class="ri-history-line"></i> 清空检测历史
+        </button>
+    </div>
+</div>
+
+<!-- 使用说明 -->
+<div class="card fade-in">
+    <h3 style="font-size:15px; margin-bottom:16px;">
+        <i class="ri-question-line" style="color:var(--green)"></i> 使用说明
+    </h3>
+    <div style="font-size:13px; color:var(--text-secondary); line-height:2;">
+        <p><strong>📷 图片检测</strong> — 支持拖拽或点击上传单张图片，可调节置信度阈值</p>
+        <p><strong>🎬 视频检测</strong> — 上传视频文件，逐帧检测并输出标注后的结果视频</p>
+        <p><strong>📹 摄像头检测</strong> — 调用本地摄像头，实时显示检测结果</p>
+        <p><strong>📁 批量检测</strong> — 一次上传多张图片，批量处理并展示结果</p>
+        <p><strong>📊 检测历史</strong> — 查看所有检测记录，包含时间、类型、详情等</p>
+        <p><strong>⚙️ 置信度阈值</strong> — 值越低检测越灵敏（可能有误报），值越高越严格（可能漏检）</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function doCleanup() {
+    if (!confirm('确定要清理所有临时文件吗？检测结果图片将被删除。')) return;
+    try {
+        await apiCleanup();
+        showToast('临时文件已清理', 'success');
+    } catch(e) {
+        showToast('清理失败', 'error');
+    }
+}
+
+// 加载 AI 配置
+async function loadAiConfig() {
+    try {
+        const res = await fetch('/api/ai/config');
+        const cfg = await res.json();
+        document.getElementById('aiBase').value = cfg.api_base || '';
+        document.getElementById('aiKey').value = cfg.api_key_set ? cfg.api_key : '';
+        document.getElementById('aiModel').value = cfg.model || '';
+        const status = document.getElementById('aiStatus');
+        if (cfg.configured) {
+            status.textContent = '已配置';
+            status.style.background = 'rgba(16,185,129,0.15)';
+            status.style.color = 'var(--green)';
+        } else {
+            status.textContent = '未配置';
+            status.style.background = 'rgba(239,68,68,0.15)';
+            status.style.color = 'var(--red)';
+        }
+    } catch(e) {}
+}
+
+// 保存 AI 配置
+async function saveAiConfig() {
+    const data = {
+        api_base: document.getElementById('aiBase').value,
+        api_key: document.getElementById('aiKey').value,
+        model: document.getElementById('aiModel').value,
+    };
+    try {
+        const res = await fetch('/api/ai/config', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        });
+        const result = await res.json();
+        showToast(result.message, 'success');
+        loadAiConfig();
+    } catch(e) {
+        showToast('保存失败', 'error');
+    }
+}
+
+// 测试 AI 连接
+async function testAiConfig() {
+    showLoading('正在测试 AI 连接...');
+    try {
+        const res = await fetch('/api/ai/analyze', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                detections: [{'class': 'drone', 'confidence': 95.0, 'bbox': [100, 100, 200, 200]}],
+                confidence: 0.25
+            })
+        });
+        const data = await res.json();
+        hideLoading();
+        if (data.error) {
+            showToast('测试失败: ' + data.error, 'error');
+        } else {
+            showToast('AI 连接测试成功!', 'success');
+        }
+    } catch(e) {
+        hideLoading();
+        showToast('测试失败: ' + e.message, 'error');
+    }
+}
+
+loadAiConfig();
+</script>
+{% endblock %}

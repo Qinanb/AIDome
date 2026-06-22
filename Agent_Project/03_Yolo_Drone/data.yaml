@@ -1,0 +1,12 @@
+# ⚠️ 必须改成你电脑上 Drone_Dataset_Final 文件夹的绝对路径
+path: D:\\pydome\\Agent_Project\\03_Yolo_Drone\\dataset
+
+# 下面这两个是相对路径，YOLO 会自动把它们拼在 path 后面
+train: images/train  
+val: images/val      
+
+# 只有两类：无人机和鸟
+nc: 2
+
+# 类别名称，严格对应我们之前修改好的 ID（0是drone，1是bird）
+names: ['drone', 'bird']

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}摄像头检测 - 无人机检测平台{% endblock %}
+
+{% block content %}
+<div class="page-header fade-in">
+    <h1><i class="ri-camera-line"></i> 摄像头实时检测</h1>
+    <p>调用本地摄像头进行实时无人机/鸟类检测</p>
+</div>
+
+<!-- 工具栏 -->
+<div class="toolbar fade-in">
+    <div class="slider-group">
+        <label>置信度阈值:</label>
+        <input type="range" id="confSlider" min="0.05" max="0.95" step="0.05" value="0.25">
+        <span class="slider-value" id="confValue">0.25</span>
+    </div>
+    <div class="camera-controls">
+        <button class="btn btn-primary" id="startBtn" onclick="startCamera()">
+            <i class="ri-play-line"></i> 启动摄像头
+        </button>
+        <button class="btn btn-danger" id="stopBtn" onclick="stopCamera()" disabled>
+            <i class="ri-stop-line"></i> 停止
+        </button>
+    </div>
+</div>
+
+<!-- 摄像头画面 -->
+<div class="camera-container fade-in" id="cameraBox">
+    <img id="cameraStream" src="" alt="摄像头画面" style="display:none;">
+    <div class="empty-state" id="cameraPlaceholder">
+        <i class="ri-webcam-line"></i>
+        <h3>摄像头未启动</h3>
+        <p>点击上方「启动摄像头」开始实时检测</p>
+    </div>
+</div>
+
+<!-- 实时检测结果 -->
+<div class="card fade-in" style="margin-top:20px;">
+    <h3 style="font-size:15px; margin-bottom:12px;">
+        <i class="ri-radar-line" style="color:var(--accent)"></i> 实时检测结果
+    </h3>
+    <div id="liveDetections">
+        <div class="empty-state" style="padding:20px">
+            <p style="font-size:13px">等待检测...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const confSlider = document.getElementById('confSlider');
+const confValue = document.getElementById('confValue');
+const startBtn = document.getElementById('startBtn');
+const stopBtn = document.getElementById('stopBtn');
+const stream = document.getElementById('cameraStream');
+const placeholder = document.getElementById('cameraPlaceholder');
+let pollTimer = null;
+
+confSlider.addEventListener('input', () => confValue.textContent = confSlider.value);
+
+async function startCamera() {
+    try {
+        const res = await fetch('/api/camera/start', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({confidence: parseFloat(confSlider.value)})
+        });
+        const data = await res.json();
+
+        stream.src = '/api/camera/stream?' + Date.now();
+        stream.style.display = 'block';
+        placeholder.style.display = 'none';
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+
+        // 轮询检测结果
+        pollTimer = setInterval(pollDetections, 500);
+        showToast('摄像头已启动', 'success');
+    } catch(e) {
+        showToast('启动失败: ' + e.message, 'error');
+    }
+}
+
+async function stopCamera() {
+    await fetch('/api/camera/stop', {method: 'POST'});
+    stream.style.display = 'none';
+    placeholder.style.display = 'block';
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+    if (pollTimer) clearInterval(pollTimer);
+    showToast('摄像头已停止', 'info');
+}
+
+async function pollDetections() {
+    try {
+        const res = await fetch('/api/camera/detections');
+        const data = await res.json();
+        renderDetections(document.getElementById('liveDetections'), data.detections);
+    } catch(e) {}
+}
+</script>
+{% endblock %}

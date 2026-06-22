@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+{% block title %}视频检测 - 无人机检测平台{% endblock %}
+
+{% block content %}
+<div class="page-header fade-in">
+    <h1><i class="ri-video-line"></i> 视频检测</h1>
+    <p>上传视频文件进行逐帧检测，支持拖拽上传，可在线实时观看</p>
+</div>
+
+<!-- 工具栏 -->
+<div class="toolbar fade-in">
+    <div class="slider-group">
+        <label>置信度阈值:</label>
+        <input type="range" id="confSlider" min="0.05" max="0.95" step="0.05" value="0.25">
+        <span class="slider-value" id="confValue">0.25</span>
+    </div>
+    <button class="btn btn-primary btn-sm" id="redetectBtn" onclick="redetect()" style="display:none;">
+        <i class="ri-restart-line"></i> 重新检测
+    </button>
+</div>
+
+<!-- 上传区域 -->
+<div class="upload-zone fade-in" id="uploadZone">
+    <input type="file" id="fileInput" accept="video/*">
+    <i class="ri-video-upload-line"></i>
+    <h3>拖拽视频到此处，或点击选择文件</h3>
+    <p>支持 MP4 / AVI / MOV / MKV 格式</p>
+</div>
+
+<!-- 视频播放区域 -->
+<div id="videoSection" style="display:none;" class="fade-in">
+    <!-- 进度信息 -->
+    <div class="toolbar" style="margin-top:20px;">
+        <div style="display:flex; align-items:center; gap:16px;">
+            <span id="statusBadge" class="badge badge-type" style="font-size:12px;">处理中</span>
+            <span id="frameInfo" style="font-size:13px; color:var(--text-secondary);">帧: 0/0</span>
+            <span id="detInfo" style="font-size:13px; color:var(--text-secondary);">检测: 0</span>
+        </div>
+        <button class="btn btn-danger btn-sm" id="stopBtn" onclick="stopVideo()">
+            <i class="ri-stop-line"></i> 停止
+        </button>
+    </div>
+
+    <!-- 进度条 -->
+    <div class="progress-bar"><div class="fill" id="progressFill" style="width:0%"></div></div>
+
+    <!-- 流式视频画面 -->
+    <div class="camera-container" style="margin-top:12px;">
+        <img id="videoStream" src="" alt="检测视频流" style="width:100%; display:block;">
+    </div>
+
+    <!-- 实时检测结果 -->
+    <div class="card" style="margin-top:16px;">
+        <h3 style="font-size:15px; margin-bottom:12px;">
+            <i class="ri-radar-line" style="color:var(--accent)"></i> 当前帧检测结果
+        </h3>
+        <div id="liveDetections">
+            <div class="empty-state" style="padding:20px">
+                <p style="font-size:13px">等待检测...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI 分析 -->
+    <div class="card" style="margin-top:16px;">
+        <div class="toolbar" style="margin-bottom:0;">
+            <h3 style="font-size:15px; margin:0;">
+                <i class="ri-sparkling-line" style="color:var(--orange)"></i> AI 智能分析
+            </h3>
+            <button class="btn btn-primary btn-sm" id="aiAnalyzeBtn" onclick="runAiAnalysis()">
+                <i class="ri-sparkling-line"></i> 开始分析
+            </button>
+        </div>
+        <div id="aiResult" style="margin-top:12px; display:none;">
+            <div id="aiContent" style="font-size:13px; line-height:1.8; color:var(--text-secondary);"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const confSlider = document.getElementById('confSlider');
+const confValue = document.getElementById('confValue');
+const fileInput = document.getElementById('fileInput');
+const uploadZone = document.getElementById('uploadZone');
+const redetectBtn = document.getElementById('redetectBtn');
+let pollTimer = null;
+let lastFile = null;
+let allVideoDetections = [];
+
+confSlider.addEventListener('input', () => confValue.textContent = confSlider.value);
+fileInput.addEventListener('change', e => { if (e.target.files.length) handleFile(e.target.files[0]); });
+initDragDrop(uploadZone, files => { if (files[0]) handleFile(files[0]); });
+
+async function handleFile(file) {
+    if (!isVideoFile(file)) {
+        showToast('不支持的视频格式', 'error');
+        return;
+    }
+    lastFile = file;
+    await detect(file);
+}
+
+async function redetect() {
+    if (!lastFile) return;
+    await detect(lastFile);
+}
+
+async function detect(file) {
+    // 先停止上一次的流
+    if (pollTimer) clearInterval(pollTimer);
+    document.getElementById('videoStream').src = '';
+
+    showLoading('正在上传并启动检测...');
+
+    const form = new FormData();
+    form.append('file', file);
+    form.append('confidence', confSlider.value);
+
+    try {
+        const res = await fetch('/api/detect/video', { method: 'POST', body: form });
+        const data = await res.json();
+        hideLoading();
+
+        if (data.error) {
+            showToast(data.error, 'error');
+            return;
+        }
+
+        showToast(`视频处理已启动! 共 ${data.total_frames} 帧`, 'success');
+        showVideoStream(data);
+    } catch(e) {
+        hideLoading();
+        showToast('上传失败: ' + e.message, 'error');
+    }
+}
+
+function showVideoStream(data) {
+    const section = document.getElementById('videoSection');
+    section.style.display = 'block';
+    document.getElementById('frameInfo').textContent = `帧: 0/${data.total_frames}`;
+    document.getElementById('statusBadge').textContent = '处理中';
+    document.getElementById('statusBadge').style.background = 'rgba(59,130,246,0.15)';
+    document.getElementById('statusBadge').style.color = 'var(--accent)';
+    document.getElementById('stopBtn').disabled = false;
+    redetectBtn.style.display = 'none';
+    allVideoDetections = [];
+    document.getElementById('aiResult').style.display = 'none';
+    document.getElementById('aiContent').innerHTML = '';
+
+    // 开始接收 MJPEG 流
+    document.getElementById('videoStream').src = '/api/video/stream?' + Date.now();
+
+    // 轮询进度
+    pollTimer = setInterval(pollProgress, 500);
+}
+
+async function pollProgress() {
+    try {
+        const res = await fetch('/api/video/progress');
+        const data = await res.json();
+
+        document.getElementById('progressFill').style.width = data.progress + '%';
+        document.getElementById('frameInfo').textContent = `帧: ${data.current_frame}/${data.total_frames}`;
+        document.getElementById('detInfo').textContent = `检测: ${data.total_detections}`;
+        renderDetections(document.getElementById('liveDetections'), data.detections);
+        // 累积检测结果用于 AI 分析
+        if (data.detections && data.detections.length > 0) {
+            allVideoDetections.push(...data.detections);
+        }
+
+        if (!data.running && data.progress >= 100) {
+            clearInterval(pollTimer);
+            document.getElementById('statusBadge').textContent = '已完成';
+            document.getElementById('statusBadge').style.background = 'rgba(16,185,129,0.15)';
+            document.getElementById('statusBadge').style.color = 'var(--green)';
+            document.getElementById('stopBtn').disabled = true;
+            redetectBtn.style.display = 'inline-flex';
+            showToast('视频检测完成!', 'success');
+        } else if (!data.running) {
+            clearInterval(pollTimer);
+            document.getElementById('statusBadge').textContent = '已停止';
+            document.getElementById('statusBadge').style.background = 'rgba(239,68,68,0.15)';
+            document.getElementById('statusBadge').style.color = 'var(--red)';
+            document.getElementById('stopBtn').disabled = true;
+            redetectBtn.style.display = 'inline-flex';
+        }
+    } catch(e) {}
+}
+
+async function stopVideo() {
+    await fetch('/api/video/stop', { method: 'POST' });
+    if (pollTimer) clearInterval(pollTimer);
+    showToast('视频处理已停止', 'info');
+}
+
+async function runAiAnalysis() {
+    // 去重：取每个类别的代表性样本
+    const seen = new Set();
+    const unique = allVideoDetections.filter(d => {
+        const key = `${d.class}_${d.confidence}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+    }).slice(0, 20);
+
+    if (unique.length === 0) {
+        showToast('没有检测结果可供分析', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('aiAnalyzeBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ri-loader-4-line"></i> 分析中...';
+    document.getElementById('aiResult').style.display = 'block';
+    document.getElementById('aiContent').innerHTML = '<p style="color:var(--text-muted);">正在调用 AI 分析，请稍候...</p>';
+
+    try {
+        const data = await apiAiAnalyze(unique, confSlider.value);
+        if (data.error) {
+            document.getElementById('aiContent').innerHTML = `<p style="color:var(--red);">${data.error}</p>`;
+        } else {
+            document.getElementById('aiContent').innerHTML = renderMarkdown(data.analysis);
+        }
+    } catch(e) {
+        document.getElementById('aiContent').innerHTML = `<p style="color:var(--red);">分析失败: ${e.message}</p>`;
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ri-sparkling-line"></i> 开始分析';
+}
+</script>
+{% endblock %}

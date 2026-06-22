@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}检测历史 - 无人机检测平台{% endblock %}
+
+{% block content %}
+<div class="page-header fade-in">
+    <h1><i class="ri-history-line"></i> 检测历史</h1>
+    <p>查看所有检测记录</p>
+</div>
+
+<div class="toolbar fade-in">
+    <div></div>
+    <div style="display:flex; gap:8px;">
+        <button class="btn btn-secondary btn-sm" onclick="refreshHistory()">
+            <i class="ri-refresh-line"></i> 刷新
+        </button>
+        <button class="btn btn-danger btn-sm" onclick="clearHistory()">
+            <i class="ri-delete-bin-line"></i> 清空历史
+        </button>
+    </div>
+</div>
+
+<div class="card fade-in">
+    <div id="historyContent">
+        <div class="empty-state">
+            <i class="ri-history-line"></i>
+            <h3>暂无检测记录</h3>
+            <p>开始检测后，记录将显示在这里</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function refreshHistory() {
+    try {
+        const history = await apiGetHistory(100);
+        renderHistory(history);
+    } catch(e) {
+        showToast('获取历史失败', 'error');
+    }
+}
+
+function renderHistory(history) {
+    const container = document.getElementById('historyContent');
+    if (!history || history.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="ri-history-line"></i>
+                <h3>暂无检测记录</h3>
+                <p>开始检测后，记录将显示在这里</p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = `
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>时间</th>
+                    <th>类型</th>
+                    <th>来源</th>
+                    <th>检测数</th>
+                    <th>详情</th>
+                    <th>耗时</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${history.map(h => `
+                    <tr>
+                        <td>${h.time}</td>
+                        <td><span class="badge badge-type">${h.type}</span></td>
+                        <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${h.source}</td>
+                        <td>${h.detections}</td>
+                        <td>${(h.details || []).map(d =>
+                            `<span class="badge ${d.class === 'drone' ? 'badge-drone' : 'badge-bird'}">${d.class} ${d.confidence}%</span>`
+                        ).join(' ')}</td>
+                        <td>${h.inference_time}ms</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>`;
+}
+
+async function clearHistory() {
+    if (!confirm('确定要清空所有检测历史吗？')) return;
+    await apiClearHistory();
+    refreshHistory();
+    showToast('历史已清空', 'info');
+}
+
+refreshHistory();
+</script>
+{% endblock %}

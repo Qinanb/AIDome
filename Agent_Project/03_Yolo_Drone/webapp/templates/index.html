@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}控制面板 - 无人机检测平台{% endblock %}
+
+{% block content %}
+<div class="page-header fade-in">
+    <h1><i class="ri-dashboard-3-line"></i> 控制面板</h1>
+    <p>YOLOv8n 无人机检测系统总览</p>
+</div>
+
+<!-- 统计卡片 -->
+<div class="stats-grid fade-in" id="statsGrid">
+    <div class="stat-card">
+        <div class="stat-icon blue"><i class="ri-search-eye-line"></i></div>
+        <div class="stat-info"><h3 id="statTotal">0</h3><p>总检测次数</p></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green"><i class="ri-drone-line"></i></div>
+        <div class="stat-info"><h3 id="statDrone">0</h3><p>无人机检测</p></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon orange"><i class="ri-bird-line"></i></div>
+        <div class="stat-info"><h3 id="statBird">0</h3><p>鸟类检测</p></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon purple"><i class="ri-image-line"></i></div>
+        <div class="stat-info"><h3 id="statImages">0</h3><p>已处理图片</p></div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon red"><i class="ri-timer-line"></i></div>
+        <div class="stat-info"><h3 id="statTime">0ms</h3><p>平均推理耗时</p></div>
+    </div>
+</div>
+
+<!-- 功能入口 -->
+<div class="stats-grid fade-in">
+    <a href="/image" class="card" style="cursor:pointer; text-align:center; padding:32px;">
+        <i class="ri-image-add-line" style="font-size:40px; color:var(--accent); display:block; margin-bottom:12px;"></i>
+        <h3 style="font-size:16px;">图片检测</h3>
+        <p style="font-size:12px; color:var(--text-secondary); margin-top:6px;">支持拖拽上传，实时检测</p>
+    </a>
+    <a href="/video" class="card" style="cursor:pointer; text-align:center; padding:32px;">
+        <i class="ri-video-upload-line" style="font-size:40px; color:var(--green); display:block; margin-bottom:12px;"></i>
+        <h3 style="font-size:16px;">视频检测</h3>
+        <p style="font-size:12px; color:var(--text-secondary); margin-top:6px;">逐帧分析，输出标注视频</p>
+    </a>
+    <a href="/camera" class="card" style="cursor:pointer; text-align:center; padding:32px;">
+        <i class="ri-webcam-line" style="font-size:40px; color:var(--orange); display:block; margin-bottom:12px;"></i>
+        <h3 style="font-size:16px;">摄像头检测</h3>
+        <p style="font-size:12px; color:var(--text-secondary); margin-top:6px;">实时摄像头流检测</p>
+    </a>
+    <a href="/batch" class="card" style="cursor:pointer; text-align:center; padding:32px;">
+        <i class="ri-gallery-upload-line" style="font-size:40px; color:var(--purple); display:block; margin-bottom:12px;"></i>
+        <h3 style="font-size:16px;">批量检测</h3>
+        <p style="font-size:12px; color:var(--text-secondary); margin-top:6px;">一次上传多张图片批量处理</p>
+    </a>
+</div>
+
+<!-- 模型信息 -->
+<div class="card fade-in" style="margin-top:8px;">
+    <h3 style="font-size:15px; margin-bottom:16px;"><i class="ri-information-line" style="color:var(--accent)"></i> 模型信息</h3>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:12px; font-size:13px;">
+        <div><span style="color:var(--text-secondary)">模型架构</span><br><strong>YOLOv8n (Nano)</strong></div>
+        <div><span style="color:var(--text-secondary)">检测类别</span><br><strong>无人机 / 鸟类</strong></div>
+        <div><span style="color:var(--text-secondary)">输入尺寸</span><br><strong>640×640</strong></div>
+        <div><span style="color:var(--text-secondary)">训练轮次</span><br><strong>100 epochs</strong></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function refreshStats() {
+    try {
+        const s = await apiGetStats();
+        document.getElementById('statTotal').textContent = s.total_detections;
+        document.getElementById('statDrone').textContent = s.drone_count;
+        document.getElementById('statBird').textContent = s.bird_count;
+        document.getElementById('statImages').textContent = s.images_processed;
+        document.getElementById('statTime').textContent = s.avg_inference_time + 'ms';
+    } catch(e) {}
+}
+refreshStats();
+setInterval(refreshStats, 3000);
+</script>
+{% endblock %}

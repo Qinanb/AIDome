@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% block title %}批量检测 - 无人机检测平台{% endblock %}
+
+{% block content %}
+<div class="page-header fade-in">
+    <h1><i class="ri-gallery-line"></i> 批量检测</h1>
+    <p>一次上传多张图片进行批量检测，支持拖拽多文件</p>
+</div>
+
+<!-- 工具栏 -->
+<div class="toolbar fade-in">
+    <div class="slider-group">
+        <label>置信度阈值:</label>
+        <input type="range" id="confSlider" min="0.05" max="0.95" step="0.05" value="0.25">
+        <span class="slider-value" id="confValue">0.25</span>
+    </div>
+    <span id="fileCount" style="font-size:13px; color:var(--text-secondary);"></span>
+</div>
+
+<!-- 上传区域 -->
+<div class="upload-zone fade-in" id="uploadZone">
+    <input type="file" id="fileInput" accept="image/*" multiple>
+    <i class="ri-gallery-upload-line"></i>
+    <h3>拖拽多张图片到此处，或点击选择文件</h3>
+    <p>支持同时选择多张图片</p>
+</div>
+
+<!-- 已选文件列表 -->
+<div id="fileListSection" style="display:none;" class="card fade-in" style="margin-top:16px;">
+    <div class="toolbar">
+        <h3 style="font-size:15px;"><i class="ri-file-list-3-line" style="color:var(--accent)"></i> 已选文件</h3>
+        <div>
+            <button class="btn btn-primary" id="startBtn" onclick="startBatch()">
+                <i class="ri-play-line"></i> 开始检测
+            </button>
+            <button class="btn btn-secondary" onclick="clearFiles()">
+                <i class="ri-delete-bin-line"></i> 清空
+            </button>
+        </div>
+    </div>
+    <div id="selectedFiles" style="font-size:13px; color:var(--text-secondary);"></div>
+</div>
+
+<!-- 进度 -->
+<div id="progressSection" style="display:none;" class="card fade-in" style="margin-top:16px;">
+    <h3 style="font-size:15px; margin-bottom:12px;">
+        <i class="ri-loader-4-line" style="color:var(--accent)"></i> 批量处理中...
+    </h3>
+    <div class="progress-bar"><div class="fill" id="progressFill" style="width:0%"></div></div>
+    <p id="progressText" style="font-size:13px; color:var(--text-secondary);">准备中...</p>
+</div>
+
+<!-- 结果 -->
+<div id="resultSection" style="display:none;" class="fade-in">
+    <div class="toolbar">
+        <h3 style="font-size:15px;">
+            <i class="ri-check-double-line" style="color:var(--green)"></i>
+            检测完成 <span id="resultSummary" style="color:var(--text-secondary); font-weight:400; font-size:13px;"></span>
+        </h3>
+        <div style="display:flex; gap:8px;">
+            <button class="btn btn-primary btn-sm" onclick="startBatch()">
+                <i class="ri-restart-line"></i> 重新检测
+            </button>
+            <button class="btn btn-primary btn-sm" id="aiAnalyzeBtn" onclick="runAiAnalysis()">
+                <i class="ri-sparkling-line"></i> AI 分析
+            </button>
+        </div>
+    </div>
+    <div class="batch-grid" id="batchGrid"></div>
+
+    <!-- AI 分析结果 -->
+    <div class="card" id="aiResult" style="margin-top:16px; display:none;">
+        <h3 style="font-size:15px; margin-bottom:12px;">
+            <i class="ri-sparkling-line" style="color:var(--orange)"></i> AI 智能分析
+        </h3>
+        <div id="aiContent" style="font-size:13px; line-height:1.8; color:var(--text-secondary);"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const confSlider = document.getElementById('confSlider');
+const confValue = document.getElementById('confValue');
+const fileInput = document.getElementById('fileInput');
+const uploadZone = document.getElementById('uploadZone');
+let selectedFiles = [];
+let lastBatchResults = null;
+
+confSlider.addEventListener('input', () => confValue.textContent = confSlider.value);
+fileInput.addEventListener('change', e => addFiles(e.target.files));
+initDragDrop(uploadZone, addFiles);
+
+function addFiles(files) {
+    for (const f of files) {
+        if (isImageFile(f)) selectedFiles.push(f);
+    }
+    updateFileList();
+}
+
+function updateFileList() {
+    const section = document.getElementById('fileListSection');
+    if (selectedFiles.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+    section.style.display = 'block';
+    document.getElementById('fileCount').textContent = `已选 ${selectedFiles.length} 个文件`;
+    document.getElementById('selectedFiles').innerHTML = selectedFiles.map(f =>
+        `<span style="display:inline-block; background:var(--bg-secondary); padding:4px 10px; border-radius:6px; margin:2px 4px 2px 0;">${f.name}</span>`
+    ).join('');
+}
+
+function clearFiles() {
+    selectedFiles = [];
+    fileInput.value = '';
+    updateFileList();
+    document.getElementById('resultSection').style.display = 'none';
+}
+
+async function startBatch() {
+    if (selectedFiles.length === 0) {
+        showToast('请先选择图片', 'error');
+        return;
+    }
+
+    document.getElementById('startBtn').disabled = true;
+    document.getElementById('resultSection').style.display = 'none';
+    document.getElementById('progressSection').style.display = 'block';
+
+    const fill = document.getElementById('progressFill');
+    const text = document.getElementById('progressText');
+    fill.style.width = '10%';
+    text.textContent = `正在处理 ${selectedFiles.length} 张图片...`;
+
+    try {
+        const data = await apiDetectBatch(selectedFiles, confSlider.value);
+        fill.style.width = '100%';
+
+        if (data.error) {
+            showToast(data.error, 'error');
+        } else {
+            showBatchResults(data);
+            showToast(`批量检测完成! 共处理 ${data.total} 张图片`, 'success');
+        }
+    } catch(e) {
+        showToast('批量检测失败: ' + e.message, 'error');
+    }
+
+    document.getElementById('progressSection').style.display = 'none';
+    document.getElementById('startBtn').disabled = false;
+}
+
+function showBatchResults(data) {
+    document.getElementById('resultSection').style.display = 'block';
+    lastBatchResults = data.results;
+    document.getElementById('aiResult').style.display = 'none';
+    document.getElementById('aiContent').innerHTML = '';
+
+    const totalDrones = data.results.reduce((s, r) => s + (r.drone_count || 0), 0);
+    const totalBirds = data.results.reduce((s, r) => s + (r.bird_count || 0), 0);
+    document.getElementById('resultSummary').textContent =
+        `| 共 ${data.total} 张 | ${totalDrones} 无人机 | ${totalBirds} 鸟类`;
+
+    document.getElementById('batchGrid').innerHTML = data.results.map(r => {
+        if (r.error) {
+            return `<div class="batch-item"><div class="info"><div class="filename">${r.filename}</div><p style="color:var(--red);font-size:12px;">${r.error}</p></div></div>`;
+        }
+        return `
+            <div class="batch-item">
+                <img src="${r.result_image}" alt="${r.filename}" onerror="this.src='${r.original_image}'">
+                <div class="info">
+                    <div class="filename">${r.filename}</div>
+                    <div class="stats">
+                        <span><i class="ri-drone-line"></i> ${r.drone_count}</span>
+                        <span><i class="ri-bird-line"></i> ${r.bird_count}</span>
+                        <span><i class="ri-timer-line"></i> ${r.inference_time}ms</span>
+                    </div>
+                </div>
+            </div>`;
+    }).join('');
+}
+
+async function runAiAnalysis() {
+    if (!lastBatchResults || lastBatchResults.length === 0) {
+        showToast('没有检测结果可供分析', 'error');
+        return;
+    }
+
+    // 汇总所有图片的检测结果
+    const allDetections = [];
+    lastBatchResults.forEach(r => {
+        if (r.detections) allDetections.push(...r.detections);
+    });
+
+    if (allDetections.length === 0) {
+        showToast('没有检测到目标，无法分析', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('aiAnalyzeBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ri-loader-4-line"></i> 分析中...';
+    document.getElementById('aiResult').style.display = 'block';
+    document.getElementById('aiContent').innerHTML = '<p style="color:var(--text-muted);">正在调用 AI 分析，请稍候...</p>';
+
+    try {
+        const data = await apiAiAnalyze(allDetections.slice(0, 30), confSlider.value);
+        if (data.error) {
+            document.getElementById('aiContent').innerHTML = `<p style="color:var(--red);">${data.error}</p>`;
+        } else {
+            document.getElementById('aiContent').innerHTML = renderMarkdown(data.analysis);
+        }
+    } catch(e) {
+        document.getElementById('aiContent').innerHTML = `<p style="color:var(--red);">分析失败: ${e.message}</p>`;
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ri-sparkling-line"></i> AI 分析';
+}
+</script>
+{% endblock %}

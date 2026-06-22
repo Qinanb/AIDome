@@ -1,0 +1,42 @@
+{
+    "api_key": "sk-arsxeswxfryzaueelnhqjwtqblhgrdrhqmovrkigtymouewt",
+    "base_url": "https://api.siliconflow.cn/v1",
+    "models": {
+        "main": "Pro/zai-org/GLM-5",
+        "subagent": "Qwen/Qwen3.5-35B-A3B",
+        "cheap": "Qwen/Qwen3.5-4B"
+    },
+    "workspace": ".",
+    "max_iterations": 32,
+    "identity_file": "identity.md",
+    "feishu": {
+        "app_id": "cli_a962cf4bdebedbd9",
+        "app_secret": "tb846ZyNtsysiWNI8pPvAcHq1RmmKYXq"
+    },
+    "qq": {
+        "app_id": "1903879033",
+        "app_secret": "odLzbDnNrAJIAwZ4"
+    },
+    "web": {
+        "enabled": true,
+        "host": "0.0.0.0",
+        "port": 8080
+    },
+    "mcp_servers": {
+        "poetry": {
+            "command": "python",
+            "args": ["mcp_servers/poetry_server.py"],
+            "description": "古诗词查询服务"
+        },
+        "filesystem": {
+            "command": "npx",
+            "args": ["-y", "@modelcontextprotocol/server-filesystem", "./"],
+            "description": "文件系统操作（社区 MCP Server）"
+        },
+        "database": {
+        "command": "python",
+        "args": ["-m", "mcp_server_sqlite", "--db-path", "data/mydata.db"],
+        "description": "SQLite 数据库查询"
+        }
+    }
+}

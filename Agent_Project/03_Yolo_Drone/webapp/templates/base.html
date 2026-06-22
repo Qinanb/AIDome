@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}无人机检测平台{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.1.0/fonts/remixicon.css" rel="stylesheet">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <!-- 侧边栏 -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="ri-drone-line"></i>
+                <span>DroneDetect</span>
+            </div>
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <i class="ri-menu-fold-line"></i>
+            </button>
+        </div>
+
+        <div class="sidebar-menu">
+            <a href="/" class="menu-item {% if request.path == '/' %}active{% endif %}">
+                <i class="ri-dashboard-3-line"></i>
+                <span>控制面板</span>
+            </a>
+            <a href="/image" class="menu-item {% if request.path == '/image' %}active{% endif %}">
+                <i class="ri-image-line"></i>
+                <span>图片检测</span>
+            </a>
+            <a href="/video" class="menu-item {% if request.path == '/video' %}active{% endif %}">
+                <i class="ri-video-line"></i>
+                <span>视频检测</span>
+            </a>
+            <a href="/camera" class="menu-item {% if request.path == '/camera' %}active{% endif %}">
+                <i class="ri-camera-line"></i>
+                <span>摄像头检测</span>
+            </a>
+            <a href="/batch" class="menu-item {% if request.path == '/batch' %}active{% endif %}">
+                <i class="ri-gallery-line"></i>
+                <span>批量检测</span>
+            </a>
+            <a href="/history" class="menu-item {% if request.path == '/history' %}active{% endif %}">
+                <i class="ri-history-line"></i>
+                <span>检测历史</span>
+            </a>
+            <a href="/settings" class="menu-item {% if request.path == '/settings' %}active{% endif %}">
+                <i class="ri-settings-3-line"></i>
+                <span>系统设置</span>
+            </a>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="model-info">
+                <i class="ri-brain-line"></i>
+                <div>
+                    <small>模型</small>
+                    <span>YOLOv8n</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <main class="main-content" id="mainContent">
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

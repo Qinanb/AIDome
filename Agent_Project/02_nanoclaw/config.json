@@ -1,0 +1,37 @@
+{
+    "api_key": "sk-9d050a27b5544ece91322f7de1686923",
+    "base_url": "https://api.deepseek.com",
+    "models": {
+        "main": "deepseek-v4-pro",
+        "subagent": "deepseek-v4-pro",
+        "cheap": "deepseek-v4-flash"
+    },
+    "workspace": ".",
+    "max_iterations": 32,
+    "identity_file": "identity.md",
+    "feishu": {
+        "app_id": "cli_aaa8ffe087f99cf6",
+        "app_secret": "qhIHc1tOji0Febeuh3lbQcMXfRA0KRf4"
+    },
+    "qq": {
+        "app_id": "1904123478",
+        "app_secret": "Z0DBuPeeR0LRIuGO"
+    },
+    "web": {
+        "enabled": true,
+        "host": "0.0.0.0",
+        "port": 8080
+    },
+    "mcp_servers": {
+        "poetry": {
+            "command": "python",
+            "args": ["mcp_servers/poetry_server.py"],
+            "description": "古诗词查询服务"
+        },
+        "filesystem": {
+            "command": "npx",
+            "args": ["-y", "@modelcontextprotocol/server-filesystem", "./"],
+            "description": "文件系统操作（社区 MCP Server）"
+        }
+    }
+}

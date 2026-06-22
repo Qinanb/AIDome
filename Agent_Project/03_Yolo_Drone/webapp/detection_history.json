@@ -1,0 +1,213 @@
+{
+  "history": [
+    {
+      "time": "2026-06-12 10:29:36",
+      "type": "image",
+      "source": "88e17143_BAndD.png",
+      "detections": 2,
+      "details": [
+        {
+          "class": "bird",
+          "confidence": 88.5,
+          "bbox": [
+            111,
+            61,
+            1806,
+            1433
+          ],
+          "area": 2325540
+        },
+        {
+          "class": "drone",
+          "confidence": 81.4,
+          "bbox": [
+            1521,
+            449,
+            2415,
+            841
+          ],
+          "area": 350448
+        }
+      ],
+      "inference_time": 113.7,
+      "result_path": "D:/pydome/Agent_Project/03_Yolo_Drone/webapp/static/results/predict/88e17143_BAndD.jpg"
+    },
+    {
+      "time": "2026-06-12 10:23:21",
+      "type": "image",
+      "source": "c5a6df31_BAndD.png",
+      "detections": 2,
+      "details": [
+        {
+          "class": "bird",
+          "confidence": 88.5,
+          "bbox": [
+            111,
+            61,
+            1806,
+            1433
+          ],
+          "area": 2325540
+        },
+        {
+          "class": "drone",
+          "confidence": 81.4,
+          "bbox": [
+            1521,
+            449,
+            2415,
+            841
+          ],
+          "area": 350448
+        }
+      ],
+      "inference_time": 118.4,
+      "result_path": "D:/pydome/Agent_Project/03_Yolo_Drone/webapp/static/results/predict/c5a6df31_BAndD.jpg"
+    },
+    {
+      "time": "2026-06-12 10:21:28",
+      "type": "image",
+      "source": "bfbe29ff_BAndD.png",
+      "detections": 2,
+      "details": [
+        {
+          "class": "bird",
+          "confidence": 88.5,
+          "bbox": [
+            111,
+            61,
+            1806,
+            1433
+          ],
+          "area": 2325540
+        },
+        {
+          "class": "drone",
+          "confidence": 81.4,
+          "bbox": [
+            1521,
+            449,
+            2415,
+            841
+          ],
+          "area": 350448
+        }
+      ],
+      "inference_time": 121.8,
+      "result_path": "D:/pydome/Agent_Project/03_Yolo_Drone/webapp/static/results/predict/bfbe29ff_BAndD.jpg"
+    },
+    {
+      "time": "2026-06-12 10:19:54",
+      "type": "image",
+      "source": "362c5355_BAndD.png",
+      "detections": 2,
+      "details": [
+        {
+          "class": "bird",
+          "confidence": 88.5,
+          "bbox": [
+            111,
+            61,
+            1806,
+            1433
+          ],
+          "area": 2325540
+        },
+        {
+          "class": "drone",
+          "confidence": 81.4,
+          "bbox": [
+            1521,
+            449,
+            2415,
+            841
+          ],
+          "area": 350448
+        }
+      ],
+      "inference_time": 532.3,
+      "result_path": "D:/pydome/Agent_Project/03_Yolo_Drone/webapp/static/results/predict/362c5355_BAndD.jpg"
+    },
+    {
+      "time": "2026-06-12 09:58:31",
+      "type": "image",
+      "source": "7ff65b50_mermaid-diagram-2026-06-09-152215.png",
+      "detections": 0,
+      "details": [],
+      "inference_time": 138.6,
+      "result_path": "D:/pydome/Agent_Project/03_Yolo_Drone/webapp/static/results/predict/7ff65b50_mermaid-diagram-2026-06-09-152215.jpg"
+    },
+    {
+      "time": "2026-06-12 09:58:31",
+      "type": "image",
+      "source": "62e297c8_BAndD.png",
+      "detections": 2,
+      "details": [
+        {
+          "class": "bird",
+          "confidence": 88.5,
+          "bbox": [
+            111,
+            61,
+            1806,
+            1433
+          ],
+          "area": 2325540
+        },
+        {
+          "class": "drone",
+          "confidence": 81.4,
+          "bbox": [
+            1521,
+            449,
+            2415,
+            841
+          ],
+          "area": 350448
+        }
+      ],
+      "inference_time": 119.3,
+      "result_path": "D:/pydome/Agent_Project/03_Yolo_Drone/webapp/static/results/predict/62e297c8_BAndD.jpg"
+    },
+    {
+      "time": "2026-06-12 09:50:56",
+      "type": "image",
+      "source": "514596bd_BAndD.png",
+      "detections": 2,
+      "details": [
+        {
+          "class": "bird",
+          "confidence": 88.5,
+          "bbox": [
+            111,
+            61,
+            1806,
+            1433
+          ],
+          "area": 2325540
+        },
+        {
+          "class": "drone",
+          "confidence": 81.4,
+          "bbox": [
+            1521,
+            449,
+            2415,
+            841
+          ],
+          "area": 350448
+        }
+      ],
+      "inference_time": 519.1,
+      "result_path": "D:/pydome/Agent_Project/03_Yolo_Drone/webapp/static/results/predict/514596bd_BAndD.jpg"
+    }
+  ],
+  "stats": {
+    "total_detections": 209,
+    "drone_count": 203,
+    "bird_count": 6,
+    "images_processed": 7,
+    "videos_processed": 0,
+    "avg_inference_time": 221.6
+  }
+}

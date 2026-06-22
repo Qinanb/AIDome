@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% block title %}图片检测 - 无人机检测平台{% endblock %}
+
+{% block content %}
+<div class="page-header fade-in">
+    <h1><i class="ri-image-line"></i> 图片检测</h1>
+    <p>上传图片进行无人机/鸟类目标检测，支持拖拽上传</p>
+</div>
+
+<!-- 工具栏 -->
+<div class="toolbar fade-in">
+    <div class="slider-group">
+        <label>置信度阈值:</label>
+        <input type="range" id="confSlider" min="0.05" max="0.95" step="0.05" value="0.25">
+        <span class="slider-value" id="confValue">0.25</span>
+    </div>
+    <button class="btn btn-secondary btn-sm" onclick="resetResult()">
+        <i class="ri-refresh-line"></i> 重置
+    </button>
+    <button class="btn btn-primary btn-sm" id="redetectBtn" onclick="redetect()" style="display:none;">
+        <i class="ri-restart-line"></i> 重新检测
+    </button>
+</div>
+
+<!-- 上传区域 -->
+<div class="upload-zone fade-in" id="uploadZone">
+    <input type="file" id="fileInput" accept="image/*">
+    <i class="ri-upload-cloud-2-line"></i>
+    <h3>拖拽图片到此处，或点击选择文件</h3>
+    <p>支持 PNG / JPG / BMP / WebP 格式</p>
+</div>
+
+<!-- 结果区域 -->
+<div id="resultSection" style="display:none;" class="fade-in">
+    <!-- 检测统计 -->
+    <div id="summaryArea"></div>
+
+    <!-- 对比图 -->
+    <div class="result-container">
+        <div class="result-image-box">
+            <span class="label">原图</span>
+            <img id="originalImg" src="" alt="原图">
+        </div>
+        <div class="result-image-box">
+            <span class="label">检测结果</span>
+            <img id="resultImg" src="" alt="检测结果">
+        </div>
+    </div>
+
+    <!-- 检测详情 -->
+    <div class="card" style="margin-top:20px;">
+        <h3 style="font-size:15px; margin-bottom:12px;">
+            <i class="ri-list-check-2" style="color:var(--accent)"></i> 检测详情
+            <span id="detCount" style="color:var(--text-secondary); font-weight:400; font-size:13px; margin-left:8px;"></span>
+        </h3>
+        <div id="detectionList"></div>
+    </div>
+
+    <!-- AI 分析 -->
+    <div class="card" style="margin-top:20px;">
+        <div class="toolbar" style="margin-bottom:0;">
+            <h3 style="font-size:15px; margin:0;">
+                <i class="ri-sparkling-line" style="color:var(--orange)"></i> AI 智能分析
+            </h3>
+            <button class="btn btn-primary btn-sm" id="aiAnalyzeBtn" onclick="runAiAnalysis()">
+                <i class="ri-sparkling-line"></i> 开始分析
+            </button>
+        </div>
+        <div id="aiResult" style="margin-top:12px; display:none;">
+            <div id="aiContent" style="font-size:13px; line-height:1.8; color:var(--text-secondary);"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const uploadZone = document.getElementById('uploadZone');
+const fileInput = document.getElementById('fileInput');
+const confSlider = document.getElementById('confSlider');
+const confValue = document.getElementById('confValue');
+const redetectBtn = document.getElementById('redetectBtn');
+let lastFile = null;
+let lastDetections = null;
+
+confSlider.addEventListener('input', () => confValue.textContent = confSlider.value);
+
+// 文件选择
+fileInput.addEventListener('change', e => {
+    if (e.target.files.length) handleFile(e.target.files[0]);
+});
+
+// 拖拽
+initDragDrop(uploadZone, files => {
+    if (files[0]) handleFile(files[0]);
+});
+
+async function handleFile(file) {
+    if (!isImageFile(file)) {
+        showToast('请选择图片文件', 'error');
+        return;
+    }
+    lastFile = file;
+    await detect(file);
+}
+
+async function redetect() {
+    if (!lastFile) return;
+    await detect(lastFile);
+}
+
+async function detect(file) {
+    showLoading('正在检测...');
+    try {
+        const data = await apiDetectImage(file, confSlider.value);
+        if (data.error) {
+            showToast(data.error, 'error');
+        } else {
+            showResult(data);
+            showToast(`检测完成，发现 ${data.count} 个目标`, 'success');
+        }
+    } catch(e) {
+        showToast('检测失败: ' + e.message, 'error');
+    }
+    hideLoading();
+}
+
+function showResult(data) {
+    document.getElementById('resultSection').style.display = 'block';
+    document.getElementById('originalImg').src = data.original_image;
+    document.getElementById('resultImg').src = data.result_image + '?' + Date.now();
+    document.getElementById('summaryArea').innerHTML = renderDetectionSummary(
+        data.drone_count, data.bird_count, data.inference_time
+    );
+    document.getElementById('detCount').textContent = `共 ${data.count} 个目标`;
+    renderDetections(document.getElementById('detectionList'), data.detections);
+    lastDetections = data.detections;
+    redetectBtn.style.display = 'inline-flex';
+    // 重置 AI 分析区域
+    document.getElementById('aiResult').style.display = 'none';
+    document.getElementById('aiContent').innerHTML = '';
+}
+
+async function runAiAnalysis() {
+    if (!lastDetections || lastDetections.length === 0) {
+        showToast('没有检测结果可供分析', 'error');
+        return;
+    }
+    const btn = document.getElementById('aiAnalyzeBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ri-loader-4-line"></i> 分析中...';
+    document.getElementById('aiResult').style.display = 'block';
+    document.getElementById('aiContent').innerHTML = '<p style="color:var(--text-muted);">正在调用 AI 分析，请稍候...</p>';
+
+    try {
+        // 获取图片 base64
+        const img = document.getElementById('resultImg');
+        let imageBase64 = null;
+        try { imageBase64 = await imageToBase64(img); } catch(e) {}
+
+        const data = await apiAiAnalyze(lastDetections, confSlider.value, imageBase64);
+        if (data.error) {
+            document.getElementById('aiContent').innerHTML = `<p style="color:var(--red);">${data.error}</p>`;
+        } else {
+            document.getElementById('aiContent').innerHTML = renderMarkdown(data.analysis);
+        }
+    } catch(e) {
+        document.getElementById('aiContent').innerHTML = `<p style="color:var(--red);">分析失败: ${e.message}</p>`;
+    }
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ri-sparkling-line"></i> 开始分析';
+}
+
+function resetResult() {
+    document.getElementById('resultSection').style.display = 'none';
+    document.getElementById('originalImg').src = '';
+    document.getElementById('resultImg').src = '';
+    fileInput.value = '';
+    lastFile = null;
+    redetectBtn.style.display = 'none';
+}
+</script>
+{% endblock %}
